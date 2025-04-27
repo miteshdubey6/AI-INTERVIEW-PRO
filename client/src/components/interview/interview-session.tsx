@@ -228,10 +228,10 @@ export function InterviewSession({
       <Dialog open={showApiKeyModal} onOpenChange={setShowApiKeyModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Anthropic API Key</DialogTitle>
+            <DialogTitle>Update Gemini API Key</DialogTitle>
             <DialogDescription>
-              Enter a valid Anthropic API key to use Claude for generating questions and evaluating answers.
-              You can get a key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Anthropic's console</a>.
+              Enter a valid Gemini API key for generating questions and evaluating answers.
+              You can get a key from <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -269,12 +269,12 @@ export function InterviewSession({
                     id="apiKey"
                     name="apiKey"
                     type="password"
-                    placeholder="sk-ant-..."
+                    placeholder="AIza..."
                     className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                     required
                   />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    API keys typically start with "sk-ant-"
+                    Gemini API keys typically start with "AIza"
                   </p>
                 </div>
                 <DialogFooter>
