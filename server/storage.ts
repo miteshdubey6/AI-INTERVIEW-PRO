@@ -1,9 +1,14 @@
 import { users, interviews, questions } from "@shared/schema";
 import type { User, InsertUser, Interview, InsertInterview, Question, InsertQuestion, FeedbackContent } from "@shared/schema";
+import express from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db, pool } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User methods
@@ -148,4 +153,112 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database-backed storage implementation
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
+  
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool,
+      createTableIfMissing: true 
+    });
+  }
+  
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+  
+  // Interview methods
+  async getInterview(id: number): Promise<Interview | undefined> {
+    const result = await db.select().from(interviews).where(eq(interviews.id, id));
+    return result[0];
+  }
+  
+  async getInterviewsByUserId(userId: number): Promise<Interview[]> {
+    return await db.select()
+      .from(interviews)
+      .where(eq(interviews.userId, userId))
+      .orderBy((interviews) => interviews.createdAt, "desc");
+  }
+  
+  async createInterview(insertInterview: InsertInterview): Promise<Interview> {
+    const result = await db.insert(interviews).values({
+      ...insertInterview,
+      createdAt: new Date().toISOString(),
+      completed: false,
+      score: null
+    }).returning();
+    return result[0];
+  }
+  
+  async completeInterview(id: number, score: number): Promise<Interview> {
+    const result = await db
+      .update(interviews)
+      .set({ 
+        completed: true, 
+        score 
+      })
+      .where(eq(interviews.id, id))
+      .returning();
+    return result[0];
+  }
+  
+  // Question methods
+  async getQuestion(id: number): Promise<Question | undefined> {
+    const result = await db.select().from(questions).where(eq(questions.id, id));
+    return result[0];
+  }
+  
+  async getQuestionsByInterviewId(interviewId: number): Promise<Question[]> {
+    return await db.select()
+      .from(questions)
+      .where(eq(questions.interviewId, interviewId))
+      .orderBy((questions) => questions.order);
+  }
+  
+  async createQuestion(insertQuestion: InsertQuestion): Promise<Question> {
+    const result = await db.insert(questions).values({
+      ...insertQuestion,
+      userAnswer: null,
+      feedback: null,
+      score: null
+    }).returning();
+    return result[0];
+  }
+  
+  async updateQuestionAnswer(id: number, answer: string, feedback: FeedbackContent, score: number): Promise<Question> {
+    // Store feedback as JSON string in the database
+    const result = await db
+      .update(questions)
+      .set({ 
+        userAnswer: answer, 
+        feedback: JSON.stringify(feedback) as any, 
+        score 
+      })
+      .where(eq(questions.id, id))
+      .returning();
+    
+    // Parse the feedback back to object if it's a string
+    const updatedQuestion = result[0];
+    if (typeof updatedQuestion.feedback === 'string') {
+      updatedQuestion.feedback = JSON.parse(updatedQuestion.feedback);
+    }
+    
+    return updatedQuestion;
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = new DatabaseStorage();
