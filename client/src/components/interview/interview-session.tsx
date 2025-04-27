@@ -79,12 +79,15 @@ export function InterviewSession({
 
   // Timer countdown
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
     if (!hasAnswer && timeLeft > 0) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
-      return () => clearTimeout(timer);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [timeLeft, hasAnswer]);
 
   // Reset timer when moving to a new question
