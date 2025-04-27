@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import InterviewPage from "@/pages/interview-page";
+import SettingsPage from "@/pages/settings-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -17,6 +18,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/interview/:id" component={InterviewPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
