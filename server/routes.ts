@@ -569,6 +569,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Update API key
+  app.post("/api/update-api-key", isAuthenticated, (req, res) => {
+    try {
+      const { apiKey } = req.body;
+      
+      if (!apiKey || typeof apiKey !== 'string') {
+        return res.status(400).json({ message: "Invalid API key format" });
+      }
+      
+      // Only allow API keys that start with sk-ant- for Anthropic
+      if (!apiKey.startsWith('sk-ant-')) {
+        return res.status(400).json({ message: "Invalid API key format. Anthropic keys start with 'sk-ant-'" });
+      }
+      
+      // Update the environment variable
+      process.env.ANTHROPIC_API_KEY = apiKey;
+      
+      // Recreate the Anthropic client with the new key
+      anthropicClient.updateApiKey(apiKey);
+      
+      res.status(200).json({ message: "API key updated successfully" });
+    } catch (error: any) {
+      console.error("Error updating API key:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

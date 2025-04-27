@@ -4,6 +4,7 @@ import { AnswerForm } from "./answer-form";
 import { FeedbackSection } from "./feedback-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
 import { 
@@ -38,6 +39,9 @@ export function InterviewSession({
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [, setLocation] = useLocation();
 
+  // Use another useEffect hook to handle API error if needed
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  
   // Handle empty questions array
   if (!questions || questions.length === 0) {
     return (
@@ -47,11 +51,16 @@ export function InterviewSession({
             Waiting for Questions
           </h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            We're having trouble generating questions. This could be due to a temporary API issue.
+            We're having trouble generating questions. This could be due to an invalid or expired API key.
           </p>
-          <Button onClick={() => setLocation("/")}>
-            Return to Dashboard
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => setShowApiKeyModal(true)} variant="default">
+              Update API Key
+            </Button>
+            <Button onClick={() => setLocation("/")} variant="outline">
+              Return to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -209,6 +218,73 @@ export function InterviewSession({
               Exit Interview
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* API Key update dialog */}
+      <Dialog open={showApiKeyModal} onOpenChange={setShowApiKeyModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Anthropic API Key</DialogTitle>
+            <DialogDescription>
+              Enter a valid Anthropic API key to use Claude for generating questions and evaluating answers.
+              You can get a key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Anthropic's console</a>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const apiKey = formData.get('apiKey') as string;
+              
+              // Send a fetch request to update the API key
+              fetch('/api/update-api-key', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ apiKey }),
+              })
+                .then(res => {
+                  if (res.ok) {
+                    setShowApiKeyModal(false);
+                    // Refresh the page to use the new API key
+                    window.location.reload();
+                  } else {
+                    throw new Error('Failed to update API key');
+                  }
+                })
+                .catch(err => {
+                  console.error('Error updating API key:', err);
+                  alert('Failed to update API key. Please try again.');
+                });
+            }}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">API Key</Label>
+                  <input
+                    id="apiKey"
+                    name="apiKey"
+                    type="password"
+                    placeholder="sk-ant-..."
+                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                    required
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    API keys typically start with "sk-ant-"
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setShowApiKeyModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Update Key
+                  </Button>
+                </DialogFooter>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

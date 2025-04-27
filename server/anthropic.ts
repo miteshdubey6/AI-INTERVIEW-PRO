@@ -11,6 +11,14 @@ export class AnthropicClient {
       apiKey: process.env.ANTHROPIC_API_KEY || "",
     });
   }
+  
+  // Method to update the API key during runtime
+  updateApiKey(newApiKey: string): void {
+    this.client = new Anthropic({
+      apiKey: newApiKey,
+    });
+    console.log("Anthropic client updated with new API key");
+  }
 
   async generateQuestions(role: string, type: string, difficulty: string, count: number): Promise<string[]> {
     const prompt = `Generate ${count} interview questions for a ${role} position. 
