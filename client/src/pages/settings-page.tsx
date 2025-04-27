@@ -26,11 +26,11 @@ export default function SettingsPage() {
       return;
     }
 
-    // Validate the API key format
-    if (!apiKey.startsWith("sk-ant-")) {
+    // Basic validation for Gemini API key (they don't have a consistent format)
+    if (apiKey.length < 10) {
       toast({
         title: "Invalid API Key",
-        description: "Anthropic API keys should start with 'sk-ant-'",
+        description: "The API key appears too short",
         variant: "destructive",
       });
       return;
@@ -56,7 +56,7 @@ export default function SettingsPage() {
       setApiKey("");
       toast({
         title: "API Key Updated",
-        description: "Your Anthropic API key has been updated successfully.",
+        description: "Your Gemini API key has been updated successfully.",
       });
     } catch (error) {
       toast({
@@ -84,17 +84,17 @@ export default function SettingsPage() {
               API Configuration
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              To enable AI-generated interview questions and feedback, you need to provide an Anthropic API key.
-              You can get a key from the <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Anthropic Console</a>.
+              To enable AI-generated interview questions and feedback, you need to provide a Google Gemini AI API key.
+              You can get a key from the <a href="https://ai.google.dev/tutorials/setup" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google AI Studio</a>.
             </p>
             
             <form onSubmit={handleUpdateApiKey} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="api-key">Anthropic API Key</Label>
+                <Label htmlFor="api-key">Gemini API Key</Label>
                 <Input
                   id="api-key"
                   type="password"
-                  placeholder="sk-ant-..."
+                  placeholder="Enter your Gemini API key..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   className="w-full"

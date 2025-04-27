@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { anthropicClient } from "./anthropic";
+import { geminiClient } from "./gemini";
 import { InsertInterview, InsertQuestion, Question, FeedbackContent } from "@shared/schema";
 
 // Middleware to check if user is authenticated
@@ -444,21 +444,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Check if we have a valid API key
-        if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === '') {
+        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === '') {
           console.log("No API key found, using fallback questions");
           throw new Error("No API key provided");
         }
         
-        questions = await anthropicClient.generateQuestions(
+        questions = await geminiClient.generateQuestions(
           interview.role,
           interview.questionType,
           interview.difficulty,
           numQuestions
         );
         
-        console.log(`Successfully generated ${questions.length} questions with Anthropic API`);
+        console.log(`Successfully generated ${questions.length} questions with Gemini API`);
       } catch (error) {
-        console.error("Error generating questions with Anthropic API:", error);
+        console.error("Error generating questions with Gemini API:", error);
         
         // Fallback questions based on role, type, and difficulty
         console.log(`Using fallback questions for ${interview.role}, ${interview.questionType}, ${interview.difficulty}`);
@@ -509,16 +509,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      // Evaluate the answer using Claude API
+      // Evaluate the answer using Gemini API
       let feedback;
       try {
         // Check if we have a valid API key
-        if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === '') {
+        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === '') {
           console.log("No API key found, using fallback evaluation");
           throw new Error("No API key provided");
         }
         
-        feedback = await anthropicClient.evaluateAnswer(
+        feedback = await geminiClient.evaluateAnswer(
           question.content,
           answer,
           interview.role,
@@ -526,9 +526,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           interview.difficulty
         );
         
-        console.log("Successfully evaluated answer with Anthropic API");
+        console.log("Successfully evaluated answer with Gemini API");
       } catch (error) {
-        console.error("Error evaluating answer with Anthropic API:", error);
+        console.error("Error evaluating answer with Gemini API:", error);
         
         // Generate fallback feedback
         console.log(`Using fallback evaluation for ${interview.role}, ${question.type}, ${interview.difficulty}`);
@@ -601,16 +601,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid API key format" });
       }
       
-      // Only allow API keys that start with sk-ant- for Anthropic
-      if (!apiKey.startsWith('sk-ant-')) {
-        return res.status(400).json({ message: "Invalid API key format. Anthropic keys start with 'sk-ant-'" });
+      // Gemini API key validation (should be a non-empty string, no specific prefix)
+      // Google API keys are typically around 39 characters
+      if (apiKey.length < 10) {
+        return res.status(400).json({ message: "Invalid API key format. The key appears too short." });
       }
       
       // Update the environment variable
-      process.env.ANTHROPIC_API_KEY = apiKey;
+      process.env.GEMINI_API_KEY = apiKey;
       
-      // Recreate the Anthropic client with the new key
-      anthropicClient.updateApiKey(apiKey);
+      // Recreate the Gemini client with the new key
+      geminiClient.updateApiKey(apiKey);
       
       res.status(200).json({ message: "API key updated successfully" });
     } catch (error: any) {
@@ -619,10 +620,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Check if Anthropic API key is valid
+  // Check if Gemini API key is valid
   app.get("/api/check-api-key", async (req, res) => {
     try {
-      const apiKey = process.env.ANTHROPIC_API_KEY;
+      const apiKey = process.env.GEMINI_API_KEY;
       
       // Check if API key exists
       if (!apiKey) {
@@ -632,21 +633,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Validate API key format
-      if (!apiKey.startsWith('sk-ant-')) {
+      // Basic validation - Google API keys don't have a consistent prefix
+      if (apiKey.length < 10) {
         return res.status(400).json({ 
           valid: false, 
-          message: "Invalid API key format. Anthropic keys start with 'sk-ant-'" 
+          message: "Invalid API key format. The key appears too short." 
         });
       }
       
       // Test the API key with a simple request
       try {
         // Make a simple request to test the API key
-        await anthropicClient.generateQuestions("software-engineer", "technical", "easy", 1);
+        await geminiClient.generateQuestions("software-engineer", "technical", "easy", 1);
         res.json({ valid: true, message: "API key is valid" });
       } catch (error: any) {
-        console.error("Error testing Anthropic API key:", error);
+        console.error("Error testing Gemini API key:", error);
         res.status(400).json({ 
           valid: false, 
           message: `API key validation failed: ${error.message}` 
