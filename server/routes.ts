@@ -443,22 +443,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let questions = [];
       
       try {
+        // Check if we have a valid API key
+        if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === '') {
+          console.log("No API key found, using fallback questions");
+          throw new Error("No API key provided");
+        }
+        
         questions = await anthropicClient.generateQuestions(
           interview.role,
           interview.questionType,
           interview.difficulty,
           numQuestions
         );
+        
+        console.log(`Successfully generated ${questions.length} questions with Anthropic API`);
       } catch (error) {
         console.error("Error generating questions with Anthropic API:", error);
         
         // Fallback questions based on role, type, and difficulty
+        console.log(`Using fallback questions for ${interview.role}, ${interview.questionType}, ${interview.difficulty}`);
         questions = generateFallbackQuestions(
           interview.role,
           interview.questionType, 
           interview.difficulty,
           numQuestions
         );
+        
+        console.log(`Generated ${questions.length} fallback questions`);
       }
 
       // Save questions to database
@@ -501,6 +512,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Evaluate the answer using Claude API
       let feedback;
       try {
+        // Check if we have a valid API key
+        if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === '') {
+          console.log("No API key found, using fallback evaluation");
+          throw new Error("No API key provided");
+        }
+        
         feedback = await anthropicClient.evaluateAnswer(
           question.content,
           answer,
@@ -508,10 +525,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           question.type,
           interview.difficulty
         );
+        
+        console.log("Successfully evaluated answer with Anthropic API");
       } catch (error) {
         console.error("Error evaluating answer with Anthropic API:", error);
         
         // Generate fallback feedback
+        console.log(`Using fallback evaluation for ${interview.role}, ${question.type}, ${interview.difficulty}`);
         feedback = generateFallbackFeedback(
           question.content, 
           answer, 
@@ -519,6 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           question.type, 
           interview.difficulty
         );
+        
+        console.log("Generated fallback evaluation feedback");
       }
 
       // Update the question with the answer and feedback
