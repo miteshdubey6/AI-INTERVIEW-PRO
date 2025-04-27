@@ -34,8 +34,12 @@ export class AnthropicClient {
       });
 
       // Split the content by newlines and filter out empty lines
-      const content = response.content[0].text;
-      return content.split('\n\n').filter(q => q.trim());
+      const contentBlock = response.content[0];
+      if (contentBlock.type !== 'text') {
+        throw new Error('Unexpected response format from Anthropic API');
+      }
+      const content = contentBlock.text;
+      return content.split('\n\n').filter((q: string) => q.trim());
     } catch (error: any) {
       console.error('Error generating questions:', error.message);
       throw new Error(`Failed to generate questions: ${error.message}`);
@@ -74,7 +78,11 @@ Format your response as a JSON object with these keys:
         messages: [{ role: 'user', content: prompt }],
       });
 
-      const content = response.content[0].text;
+      const contentBlock = response.content[0];
+      if (contentBlock.type !== 'text') {
+        throw new Error('Unexpected response format from Anthropic API');
+      }
+      const content = contentBlock.text;
       return JSON.parse(content);
     } catch (error: any) {
       console.error('Error evaluating answer:', error.message);

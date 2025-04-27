@@ -596,6 +596,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+  
+  // Check if Anthropic API key is valid
+  app.get("/api/check-api-key", async (req, res) => {
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      
+      // Check if API key exists
+      if (!apiKey) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "No API key set" 
+        });
+      }
+      
+      // Validate API key format
+      if (!apiKey.startsWith('sk-ant-')) {
+        return res.status(400).json({ 
+          valid: false, 
+          message: "Invalid API key format. Anthropic keys start with 'sk-ant-'" 
+        });
+      }
+      
+      // Test the API key with a simple request
+      try {
+        // Make a simple request to test the API key
+        await anthropicClient.generateQuestions("software-engineer", "technical", "easy", 1);
+        res.json({ valid: true, message: "API key is valid" });
+      } catch (error: any) {
+        console.error("Error testing Anthropic API key:", error);
+        res.status(400).json({ 
+          valid: false, 
+          message: `API key validation failed: ${error.message}` 
+        });
+      }
+    } catch (error: any) {
+      console.error("Error checking API key:", error);
+      res.status(500).json({ 
+        valid: false, 
+        message: error.message 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
