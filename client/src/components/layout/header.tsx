@@ -37,15 +37,23 @@ export function Header({ openModal }: HeaderProps) {
         <div className="hidden md:flex items-center">
           <Button 
             onClick={openModal}
-            variant="default" 
             size="default"
-            className="mr-4 bg-primary hover:bg-primary/90 text-white font-semibold"
+            className="mr-4 bg-green-600 hover:bg-green-700 text-white font-bold px-6 shadow-md border border-white"
           >
-            Start New Interview
+            🚀 Start Interview
           </Button>
         </div>
         
         <div className="flex items-center space-x-4">
+          {/* Mobile visible start interview button */}
+          <Button 
+            onClick={openModal}
+            size="sm"
+            className="md:hidden bg-green-600 hover:bg-green-700 text-white font-semibold"
+          >
+            🚀 Start
+          </Button>
+          
           <Button 
             variant="ghost" 
             size="icon" 
