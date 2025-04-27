@@ -5,7 +5,10 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
+
+// Store types
+type SessionStore = ReturnType<typeof createMemoryStore> | ReturnType<typeof connectPg>;
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
@@ -29,7 +32,7 @@ export interface IStorage {
   updateQuestionAnswer(id: number, answer: string, feedback: FeedbackContent, score: number): Promise<Question>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
 }
 
 export class MemStorage implements IStorage {
@@ -37,7 +40,7 @@ export class MemStorage implements IStorage {
   private interviewStore: Map<number, Interview>;
   private questionStore: Map<number, Question>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
   
   private userIdCounter: number;
   private interviewIdCounter: number;
@@ -155,7 +158,7 @@ export class MemStorage implements IStorage {
 
 // Database-backed storage implementation
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: SessionStore;
   
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
@@ -190,15 +193,15 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(interviews)
       .where(eq(interviews.userId, userId))
-      .orderBy((interviews) => interviews.createdAt, "desc");
+      .orderBy(desc(interviews.createdAt));
   }
   
   async createInterview(insertInterview: InsertInterview): Promise<Interview> {
     const result = await db.insert(interviews).values({
       ...insertInterview,
-      createdAt: new Date().toISOString(),
       completed: false,
       score: null
+      // CreatedAt will be set by the database default
     }).returning();
     return result[0];
   }
@@ -225,7 +228,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select()
       .from(questions)
       .where(eq(questions.interviewId, interviewId))
-      .orderBy((questions) => questions.order);
+      .orderBy(asc(questions.order));
   }
   
   async createQuestion(insertQuestion: InsertQuestion): Promise<Question> {
