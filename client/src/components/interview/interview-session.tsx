@@ -33,17 +33,47 @@ export function InterviewSession({
   isSubmitting,
   isCompleting
 }: InterviewSessionProps) {
+  // All React hooks must be called at the top level
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes per question
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [, setLocation] = useLocation();
-
-  // Use another useEffect hook to handle API error if needed
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   
-  // Handle empty questions array
-  if (!questions || questions.length === 0) {
+  // Define variables that depend on questions - must be after all hooks
+  const isEmpty = !questions || questions.length === 0;
+  const currentQuestion = isEmpty ? null : questions[currentQuestionIndex];
+  const hasAnswer = currentQuestion?.userAnswer;
+  const isLastQuestion = isEmpty ? false : currentQuestionIndex === questions.length - 1;
+  
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // All effect hooks
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (!hasAnswer && timeLeft > 0) {
+      timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [timeLeft, hasAnswer]);
+
+  useEffect(() => {
+    setTimeLeft(300);
+    setAnswer("");
+  }, [currentQuestionIndex]);
+  
+  // Early return for empty questions
+  if (isEmpty) {
     return (
       <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -65,37 +95,7 @@ export function InterviewSession({
       </div>
     );
   }
-
-  const currentQuestion = questions[currentQuestionIndex];
-  const hasAnswer = currentQuestion?.userAnswer;
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
   
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Timer countdown
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    if (!hasAnswer && timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [timeLeft, hasAnswer]);
-
-  // Reset timer when moving to a new question
-  useEffect(() => {
-    setTimeLeft(300);
-    setAnswer("");
-  }, [currentQuestionIndex]);
-
   const handleSubmitAnswer = () => {
     if (answer.trim() && currentQuestion) {
       onSubmitAnswer(currentQuestion.id, answer);
