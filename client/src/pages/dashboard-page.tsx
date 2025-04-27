@@ -43,8 +43,9 @@ export default function DashboardPage({ onStartInterview }: DashboardPageProps) 
         <p className="mb-4 text-white/80">Ready to ace your next interview? Practice makes perfect.</p>
         <Button 
           onClick={onStartInterview} 
-          variant="secondary" 
-          className="bg-white text-primary-foreground hover:bg-gray-100"
+          variant="default" 
+          size="lg"
+          className="bg-white text-primary-foreground hover:bg-gray-100 font-bold text-lg shadow-lg px-6 py-6 animate-pulse"
         >
           Start New Interview
         </Button>

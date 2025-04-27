@@ -77,11 +77,26 @@ export function AnswerForm({ answer, setAnswer, onSubmit, isSubmitting }: Answer
     
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error', event.error);
+      
+      // Handle common errors with more user-friendly messages
+      let errorMessage = "Speech recognition failed. Please try again.";
+      
+      if (event.error === 'no-speech') {
+        errorMessage = "No speech detected. Please speak louder or check your microphone settings.";
+      } else if (event.error === 'audio-capture') {
+        errorMessage = "No microphone detected. Please connect a microphone and try again.";
+      } else if (event.error === 'not-allowed') {
+        errorMessage = "Microphone access denied. Please allow microphone access in your browser settings.";
+      } else if (event.error === 'network') {
+        errorMessage = "Network error occurred. Please check your internet connection.";
+      }
+      
       toast({
-        title: "Error",
-        description: `Speech recognition error: ${event.error}`,
+        title: "Voice Input Error",
+        description: errorMessage,
         variant: "destructive"
       });
+      
       setIsListening(false);
     };
     

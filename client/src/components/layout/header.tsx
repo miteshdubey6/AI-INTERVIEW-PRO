@@ -32,6 +32,19 @@ export function Header({ openModal }: HeaderProps) {
           </Sheet>
           <h1 className="text-lg font-heading font-bold ml-3 text-gray-800 dark:text-white">AI Interview Prep</h1>
         </div>
+        
+        {/* Add clearly visible interview button */}
+        <div className="hidden md:flex items-center">
+          <Button 
+            onClick={openModal}
+            variant="default" 
+            size="default"
+            className="mr-4 bg-primary hover:bg-primary/90 text-white font-semibold"
+          >
+            Start New Interview
+          </Button>
+        </div>
+        
         <div className="flex items-center space-x-4">
           <Button 
             variant="ghost" 
