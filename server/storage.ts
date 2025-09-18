@@ -8,7 +8,7 @@ import { db, pool } from "./db";
 import { eq, desc, asc } from "drizzle-orm";
 
 // Store types
-type SessionStore = ReturnType<typeof createMemoryStore> | ReturnType<typeof connectPg>;
+type SessionStore = any;
 
 const MemoryStore = createMemoryStore(session);
 const PostgresSessionStore = connectPg(session);
@@ -95,7 +95,7 @@ export class MemStorage implements IStorage {
       ...insertInterview,
       id,
       score: null,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),
       completed: false,
     };
     this.interviewStore.set(id, interview);
@@ -263,5 +263,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use memory storage instead of database storage since database endpoint is disabled
-export const storage = new MemStorage();
+// Use database storage for data persistence
+export const storage = new DatabaseStorage();
