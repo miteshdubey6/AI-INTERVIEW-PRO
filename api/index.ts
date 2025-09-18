@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import serverless from "serverless-http"; // adapts express for serverless
-import { registerRoutes } from "../server/routes"; // adjust path
-import { setupVite, serveStatic, log } from "../server/vite"; // adjust path
+import serverless from "serverless-http"; 
+import { registerRoutes } from "../server/routes"; 
+import { serveStatic, log } from "../server/vite"; // only keep serveStatic, not setupVite
 
 const app = express();
 
@@ -44,12 +44,8 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Only setup Vite in development
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, app); // pass app for dev server, no need for listen
-  } else {
-    serveStatic(app);
-  }
+  // Vercel doesn’t support Vite dev middleware → skip setupVite
+  serveStatic(app);
 })();
 
 // Export serverless handler
