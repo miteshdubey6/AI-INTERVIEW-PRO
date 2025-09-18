@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
+import InterviewsPage from "@/pages/interviews-page";
+import ProgressPage from "@/pages/progress-page";
 import InterviewPage from "@/pages/interview-page";
 import SettingsPage from "@/pages/settings-page";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -17,6 +19,8 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/interviews" component={InterviewsPage} />
+      <ProtectedRoute path="/progress" component={ProgressPage} />
       <ProtectedRoute path="/interview/:id" component={InterviewPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <Route path="/auth" component={AuthPage} />
